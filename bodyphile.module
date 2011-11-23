@@ -1,0 +1,77 @@
+<?php
+
+/**
+ * @file
+ * Provides the ability to retrieve content files and apply them to nodes.
+ */
+
+
+/**
+ * The default location for bodyphile content files. Example sites/all/content.
+ */
+define('BODYPHILE_CONTENT_DIRECTORY', 'content');
+
+
+/**
+ * Implements hook_nodeapi().
+ */
+function bodyphile_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  // Replace the body of the node with the contents of our file, but ignore 
+  // this on node/%/edit pages so we don't override the version in the database.
+  if ( $op == 'load' && bodyphile_exists($node) && !( arg(0) == 'node' && arg(2) == 'edit' ) ) {
+    $node->body = bodyphile_get_contents($node);
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function bodyphile_form_alter(&$form, &$form_state, $form_id) {
+  // Look for node forms and show a message to the user, notifying them that this node's body is being overridden by the module.
+  if ( strpos($form_id, '_node_form') !== FALSE && $form['#node'] && bodyphile_exists($form['#node']) ) {
+    drupal_set_message(t('The body of this node is being overridden by bodyphile. You can find the file in %location', array(
+      '%location' => bodyphile_get_filepath($form['#node']),
+    )));
+  }
+}
+
+/**
+ * Returns the current content path.
+ */
+function bodyphile_get_path() {
+  return conf_path() . '/' . variable_get('bodyphile_content_directory', BODYPHILE_CONTENT_DIRECTORY);
+}
+
+/**
+ * Returns a node bodyphile path.
+ *
+ * @param $node
+ *   A node object.
+ */
+function bodyphile_get_filepath($node) {
+  return bodyphile_get_path() . "/$node->type/$node->nid.html";
+}
+
+/**
+ * Determine whether node exists in filesystem.
+ *
+ * @param $node
+ *   A node object.
+ * @return
+ *   TRUE or FALSE whether the bodyphile for the supplied node exists.
+ */
+function bodyphile_exists($node) {
+  return file_exists(bodyphile_get_filepath($node));
+}
+
+/**
+ * Return the contents of a bodyphile.
+ *
+ * @param $node
+ *   A node object.
+ * @return
+ *   The contents of the bodyphile.
+ */
+function bodyphile_get_contents($node) {
+  return file_get_contents(bodyphile_get_filepath($node));
+}

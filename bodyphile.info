@@ -1,0 +1,6 @@
+name              = Bodyphile
+description       = Provides the ability to retrieve content files and apply them to nodes.
+core              = 6.x
+package           = Custom
+
+version           = 6.x-1.x
